@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>World Capitals Quiz</title>
+  <meta name="description" content="Name the capital city of every country in the world, on a map.">
+  <meta name="theme-color" content="#14284b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Capitals">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3.2 3 16.8 0 20M12 2c-3 3.2-3 16.8 0 20"/></svg>
+        <span class="brand-text">World Capitals</span>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Score</span>
+          <span class="stat-value"><span id="score">0</span><span class="of">/<span id="total">197</span></span></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Timer</span>
+          <span class="stat-value" id="timer">20:00</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="give-up" type="button" hidden>Give up</button>
+      <button class="btn btn-primary btn-small" id="play-again" type="button" hidden>Play again</button>
+    </header>
+
+    <div class="answer-bar">
+      <label class="sr-only" for="answer">Capital city</label>
+      <input id="answer" class="answer" type="text" placeholder="Press Start to play" disabled
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+      <div class="left" id="left"><strong id="left-count">197</strong> to go</div>
+    </div>
+
+    <nav class="regions" id="regions" aria-label="Zoom to region"></nav>
+
+    <main class="map" id="map">
+      <svg id="svg" class="map-svg" role="img" aria-label="World map with capital cities">
+        <g id="viewport"><g id="land"></g></g>
+        <g id="labels"></g>
+        <g id="pins"></g>
+      </svg>
+
+      <div class="map-controls">
+        <button type="button" class="ctl" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+        <button type="button" class="ctl" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button type="button" class="ctl" id="zoom-reset" title="Whole world" aria-label="Show whole world">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button type="button" class="ctl toggle" id="toggle-labels" aria-pressed="true" title="Show answer labels">Aa</button>
+        <button type="button" class="ctl toggle" id="toggle-dots" aria-pressed="true" title="Show unanswered locations">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/></svg>
+        </button>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="tooltip" id="tooltip" hidden></div>
+
+      <div class="overlay" id="start-overlay">
+        <div class="card start-card">
+          <h1>Capitals of the World</h1>
+          <p>Type the capital of every country. Each one you get lights up on the map&nbsp;&mdash; the blue dots are the ones still missing.</p>
+          <div class="time-pick" role="radiogroup" aria-label="Time limit" id="time-pick">
+            <button type="button" data-min="10">10 min</button>
+            <button type="button" data-min="15">15 min</button>
+            <button type="button" data-min="20" class="selected">20 min</button>
+            <button type="button" data-min="0">No limit</button>
+          </div>
+          <button class="btn btn-primary btn-big" id="start" type="button">Start</button>
+          <p class="best" id="best"></p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <section class="list-section" id="list-section">
+    <div class="list-head">
+      <h2 id="list-title">Found so far</h2>
+      <p class="list-hint" id="list-hint">Capitals appear here as you name them.</p>
+    </div>
+    <div class="list-grid" id="list-grid"></div>
+  </section>
+
+  <div class="modal" id="results" hidden>
+    <div class="card results-card" role="dialog" aria-modal="true" aria-labelledby="results-title">
+      <h2 id="results-title">Time's up!</h2>
+      <p class="big-score"><span id="r-score">0</span><span class="of">/197</span></p>
+      <p class="r-sub" id="r-sub"></p>
+      <div class="r-regions" id="r-regions"></div>
+      <div class="r-actions">
+        <button class="btn btn-ghost" id="r-review" type="button">Review map</button>
+        <button class="btn btn-primary" id="r-again" type="button">Play again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/world-map.js?v=1"></script>
+  <script src="js/capitals.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>
