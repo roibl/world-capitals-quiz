@@ -3,7 +3,7 @@
 Name the capital city of every country in the world, on a map. Each blue dot is a
 capital you haven't named yet; type one and it turns green, with its country shaded.
 
-**Play:** https://roiblumberg.github.io/world-capitals-quiz/
+**Play:** https://roibl.github.io/world-capitals-quiz/
 
 ## How to play
 
