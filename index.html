@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>World Capitals Quiz</title>
-  <meta name="description" content="Name the capital city of every country in the world, on a map.">
+  <title>Countries &amp; Capitals Quiz</title>
+  <meta name="description" content="Name every country in the world and its capital, on a map.">
   <meta name="theme-color" content="#14284b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/style.css?v=1">
+  <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
   <div class="app" id="app">
@@ -37,9 +37,17 @@
     </header>
 
     <div class="answer-bar">
-      <label class="sr-only" for="answer">Capital city</label>
-      <input id="answer" class="answer" type="text" placeholder="Press Start to play" disabled
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+      <div class="field" id="country-field">
+        <label class="sr-only" for="country">Country</label>
+        <input id="country" class="answer" type="text" placeholder="Press Start" disabled
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+        <span class="tick" aria-hidden="true">&#10003;</span>
+      </div>
+      <div class="field" id="capital-field">
+        <label class="sr-only" for="capital">Capital</label>
+        <input id="capital" class="answer" type="text" placeholder="" disabled
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+      </div>
       <div class="left" id="left"><strong id="left-count">197</strong> to go</div>
     </div>
 
@@ -69,8 +77,8 @@
 
       <div class="overlay" id="start-overlay">
         <div class="card start-card">
-          <h1>Capitals of the World</h1>
-          <p>Type the capital of every country. Each one you get lights up on the map&nbsp;&mdash; the blue dots are the ones still missing.</p>
+          <h1>Countries &amp; Capitals</h1>
+          <p>Type a country, then its capital. Each pair you get lights up on the map&nbsp;&mdash; the blue dots are the ones still missing.</p>
           <div class="time-pick" role="radiogroup" aria-label="Time limit" id="time-pick">
             <button type="button" data-min="10">10 min</button>
             <button type="button" data-min="15">15 min</button>
@@ -105,8 +113,8 @@
     </div>
   </div>
 
-  <script src="js/world-map.js?v=1"></script>
-  <script src="js/capitals.js?v=1"></script>
-  <script src="js/app.js?v=1"></script>
+  <script src="js/world-map.js?v=2"></script>
+  <script src="js/capitals.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
 </body>
 </html>

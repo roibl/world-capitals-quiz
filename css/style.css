@@ -81,9 +81,25 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .btn-big { font-size: 18px; padding: 14px 44px; }
 
 /* ---------- answer bar ---------- */
-.answer-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.answer-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.field { position: relative; flex: 1; min-width: 0; }
+.field .tick {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) scale(.6);
+  color: var(--found);
+  font-weight: 800;
+  font-size: 18px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s, transform .15s;
+}
+.field.ok .tick { opacity: 1; transform: translateY(-50%) scale(1); }
+.field.ok .answer { border-color: var(--found); padding-right: 34px; }
+.field.ok .answer:focus { box-shadow: 0 0 0 4px rgba(21, 161, 74, .14); }
 .answer {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   font: inherit;
   font-size: 18px;            /* >= 16px so iOS doesn't zoom on focus */
@@ -103,7 +119,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   20%, 60% { transform: translateX(-5px); }
   40%, 80% { transform: translateX(5px); }
 }
-.left { font-size: 14px; color: var(--ink-soft); white-space: nowrap; }
+.left { font-size: 14px; color: var(--ink-soft); white-space: nowrap; margin-left: 4px; }
 .left strong { color: var(--dot); font-size: 18px; font-variant-numeric: tabular-nums; }
 
 /* ---------- region chips ---------- */
@@ -338,4 +354,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .time-pick button { padding: 7px 9px; font-size: 13.5px; }
   .big-score { font-size: 48px; }
   .r-region .v { font-size: 16px; }
+}
+@media (max-width: 480px) {
+  .answer-bar { gap: 6px; }
+  .answer { padding: 10px 10px; }
+  .field.ok .answer { padding-right: 28px; }
+  .field .tick { right: 9px; }
+  .left { display: none; }   /* the score in the header already shows progress */
 }

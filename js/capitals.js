@@ -214,6 +214,47 @@ window.CAPITALS = [
   ["Vanuatu", "Port Vila", [], -17.73, 168.32, "OC", "548"],
 ];
 
+// Other names accepted for a country. Matching ignores case, accents, punctuation,
+// a leading "The" and "St." vs "Saint". "Congo" alone matches both Congos; the
+// capital you type then decides which one it is.
+window.COUNTRY_ALTS = {
+  "Antigua and Barbuda": ["Antigua"],
+  "Bosnia and Herzegovina": ["Bosnia", "Bosnia-Herzegovina"],
+  "Brunei": ["Brunei Darussalam"],
+  "Cape Verde": ["Cabo Verde"],
+  "Central African Republic": ["CAR"],
+  "Czechia": ["Czech Republic"],
+  "DR Congo": ["Democratic Republic of the Congo", "DRC", "Congo-Kinshasa", "Congo"],
+  "East Timor": ["Timor-Leste", "Timor Leste"],
+  "Eswatini": ["Swaziland"],
+  "Ireland": ["Republic of Ireland", "Eire"],
+  "Ivory Coast": ["Côte d'Ivoire"],
+  "Kyrgyzstan": ["Kyrgyz Republic"],
+  "Laos": ["Lao PDR", "Lao"],
+  "Micronesia": ["Federated States of Micronesia", "FSM"],
+  "Moldova": ["Republic of Moldova"],
+  "Myanmar": ["Burma"],
+  "Netherlands": ["Holland"],
+  "New Zealand": ["NZ"],
+  "North Korea": ["DPRK", "N Korea"],
+  "North Macedonia": ["Macedonia"],
+  "Palestine": ["State of Palestine"],
+  "Papua New Guinea": ["PNG"],
+  "Republic of the Congo": ["Congo-Brazzaville", "Congo Republic", "Congo"],
+  "Russia": ["Russian Federation"],
+  "Saint Kitts and Nevis": ["Saint Kitts", "Saint Christopher and Nevis"],
+  "Saint Vincent and the Grenadines": ["Saint Vincent"],
+  "São Tomé and Príncipe": ["São Tomé"],
+  "South Korea": ["Republic of Korea", "S Korea", "Korea"],
+  "Trinidad and Tobago": ["Trinidad"],
+  "Turkey": ["Türkiye"],
+  "United Arab Emirates": ["UAE", "Emirates"],
+  "United Kingdom": ["UK", "Great Britain", "Britain"],
+  "United States": ["USA", "US", "United States of America", "America"],
+  "Vatican City": ["Vatican", "Holy See"],
+  "Vietnam": ["Viet Nam"],
+};
+
 window.REGIONS = [
   { key: "EU", name: "Europe", bounds: [-25, 34, 45, 71] },
   { key: "AS", name: "Asia", bounds: [25, -11, 148, 56] },

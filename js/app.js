@@ -33,7 +33,7 @@
   function norm(s) {
     return s
       .toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ß/g, 'ss')
       .replace(/ł/g, 'l').replace(/đ/g, 'd').replace(/ı/g, 'i').replace(/þ/g, 'th')
       .replace(/&/g, 'and')
@@ -50,10 +50,21 @@
       if (!answerIndex.get(k).includes(e.i)) answerIndex.get(k).push(e.i);
     }
   }
-  // Answers that are the start of a longer answer ("washington" / "washingtondc") wait a
+  const countryIndex = new Map(); // normalised country name -> [entry index]
+  for (const e of entries) {
+    for (const a of [e.country, ...((window.COUNTRY_ALTS || {})[e.country] || [])]) {
+      const k = norm(a);
+      if (!countryIndex.has(k)) countryIndex.set(k, []);
+      if (!countryIndex.get(k).includes(e.i)) countryIndex.get(k).push(e.i);
+    }
+  }
+
+  const prefixOfAnother = (keys) => new Set(keys.filter((k) => keys.some((o) => o !== k && o.startsWith(k))));
+  // Capitals that are the start of a longer answer ("washington" / "washingtondc") wait a
   // moment before counting, so typing the long form doesn't get cut off half-way.
-  const answerKeys = [...answerIndex.keys()];
-  const ambiguous = new Set(answerKeys.filter((k) => answerKeys.some((o) => o !== k && o.startsWith(k))));
+  const ambiguous = prefixOfAnother([...answerIndex.keys()]);
+  // Same for countries ("niger" / "nigeria"): don't jump to the capital box straight away.
+  const countryPrefix = prefixOfAnother([...countryIndex.keys()]);
 
   // ------------------------------------------------------------------
   // Projection (must match tools/build_map.py)
@@ -78,7 +89,11 @@
   const landG = $('land');
   const pinsG = $('pins');
   const labelsG = $('labels');
-  const input = $('answer');
+  const countryIn = $('country');
+  const capitalIn = $('capital');
+  const countryField = $('country-field');
+  const inputs = [countryIn, capitalIn];
+  const isTyping = () => inputs.includes(document.activeElement);
   const toastEl = $('toast');
   const tooltipEl = $('tooltip');
   const timerEl = $('timer');
@@ -550,10 +565,8 @@
     $('results').hidden = true;
     $('give-up').hidden = false;
     $('play-again').hidden = true;
-    input.disabled = false;
-    input.value = '';
-    input.placeholder = 'Type a capital city…';
-    input.focus();
+    setInputs(false, 'Country', 'Capital');
+    countryIn.focus();
     updateHud();
     renderList();
     render();
@@ -574,35 +587,56 @@
     for (const p of pathsById.get(e.id) || []) p.setAttribute('class', 'found');
   }
 
-  let pendingMatch = 0;
-  function tryMatch(force) {
-    clearTimeout(pendingMatch);
+  // ----- answering: a country and its capital, in two boxes -----
+  let pairTimer = 0;
+  let advanceTimer = 0;
+
+  function setInputs(disabled, countryPh, capitalPh) {
+    clearTimeout(pairTimer);
+    clearTimeout(advanceTimer);
+    countryIn.disabled = capitalIn.disabled = disabled;
+    countryIn.value = capitalIn.value = '';
+    countryIn.placeholder = countryPh;
+    capitalIn.placeholder = capitalPh;
+    countryField.classList.remove('ok');
+  }
+
+  function flash(el, cls) {
+    el.classList.remove(cls);
+    void el.offsetWidth; // restart the animation
+    el.classList.add(cls);
+  }
+
+  /** Entries the country box currently names (several for "Congo"), or null. */
+  function countryMatches() {
+    const k = norm(countryIn.value);
+    return (k && countryIndex.get(k)) || null;
+  }
+
+  /** Score the pair if the two boxes name a country and its capital. */
+  function tryPair(force) {
+    clearTimeout(pairTimer);
     if (game.status !== 'playing') return false;
-    const key = norm(input.value);
-    if (!key) return false;
-    const hits = answerIndex.get(key);
-    if (!hits) return false;
-    const open = hits.map((i) => entries[i]).filter((e) => e.state === 'open');
-    if (!open.length) {
-      if (force) {
-        const e = entries[hits[0]];
-        toast(`Already found: ${e.capital} (${e.country})`);
-        input.value = '';
-      }
-      return force;
-    }
-    if (!force && ambiguous.has(key)) {
-      pendingMatch = setTimeout(() => tryMatch(true), 650);
+    const cands = countryMatches();
+    const capKey = norm(capitalIn.value);
+    const caps = capKey && answerIndex.get(capKey);
+    if (!cands || !caps) return false;
+    const hits = caps.filter((i) => cands.includes(i) && entries[i].state === 'open').map((i) => entries[i]);
+    if (!hits.length) return false;
+    if (!force && ambiguous.has(capKey)) {
+      pairTimer = setTimeout(() => tryPair(true), 650);
       return false;
     }
-    open.forEach(markFound);
-    input.value = '';
-    input.classList.remove('hit');
-    void input.offsetWidth;
-    input.classList.add('hit');
-    setTimeout(() => input.classList.remove('hit'), 350);
-    const last = open[open.length - 1];
-    toast(`${last.capital} · ${last.country}`, 'good');
+    hits.forEach(markFound);
+    clearTimeout(advanceTimer);
+    countryIn.value = capitalIn.value = '';
+    countryField.classList.remove('ok');
+    flash(countryIn, 'hit');
+    flash(capitalIn, 'hit');
+    setTimeout(() => inputs.forEach((el) => el.classList.remove('hit')), 350);
+    countryIn.focus();
+    const e = hits[hits.length - 1];
+    toast(`${e.country} · ${e.capital}`, 'good');
     updateHud();
     renderList();
     render();
@@ -610,23 +644,83 @@
     return true;
   }
 
-  input.addEventListener('input', () => tryMatch(false));
-  input.addEventListener('keydown', (ev) => {
+  countryIn.addEventListener('input', () => {
+    clearTimeout(advanceTimer);
+    if (game.status !== 'playing') return;
+    const key = norm(countryIn.value);
+    const cands = countryMatches();
+    countryField.classList.toggle('ok', !!cands);
+    if (!cands) return;
+    if (cands.every((i) => entries[i].state !== 'open')) {
+      if (!countryPrefix.has(key)) {
+        const e = entries[cands[0]];
+        toast(`Already done: ${e.country} · ${e.capital}`);
+        countryIn.value = '';
+        countryField.classList.remove('ok');
+      }
+      return;
+    }
+    if (tryPair(false) || capitalIn.value) return;
+    // Jump to the capital box once the country is unambiguous. If it could still be the
+    // start of a longer name ("Niger" -> "Nigeria"), wait for a pause in typing first.
+    const advance = () => { if (countryMatches()) capitalIn.focus(); };
+    if (cands.length > 1) return; // "Congo": the capital decides, so let the player move on
+    if (countryPrefix.has(key)) advanceTimer = setTimeout(advance, 700);
+    else advance();
+  });
+
+  capitalIn.addEventListener('input', () => tryPair(false));
+
+  countryIn.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') { clearBoth(); return; }
     if (ev.key !== 'Enter') return;
     ev.preventDefault();
-    if (!input.value.trim()) return;
-    if (!tryMatch(true)) {
-      input.classList.remove('shake');
-      void input.offsetWidth;
-      input.classList.add('shake');
+    const key = norm(countryIn.value);
+    if (!key) return;
+    if (countryMatches()) {
+      if (!tryPair(true)) capitalIn.focus();
+      return;
     }
+    if (answerIndex.has(key)) toast('That’s a capital — type the country first');
+    flash(countryIn, 'shake');
   });
-  input.addEventListener('animationend', () => input.classList.remove('shake'));
+
+  capitalIn.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') { clearBoth(); return; }
+    if (ev.key === 'Backspace' && !capitalIn.value) {
+      ev.preventDefault();
+      countryIn.focus();
+      return;
+    }
+    if (ev.key !== 'Enter') return;
+    ev.preventDefault();
+    if (!capitalIn.value.trim()) { countryIn.focus(); return; }
+    if (tryPair(true)) return;
+    const cands = countryMatches();
+    if (!cands) {
+      toast('Type the country in the first box');
+      flash(countryIn, 'shake');
+      return;
+    }
+    if (answerIndex.has(norm(capitalIn.value))) {
+      toast(cands.length === 1 ? `Not the capital of ${entries[cands[0]].country}` : 'Not a match');
+    }
+    flash(capitalIn, 'shake');
+  });
+
+  function clearBoth() {
+    clearTimeout(pairTimer);
+    clearTimeout(advanceTimer);
+    countryIn.value = capitalIn.value = '';
+    countryField.classList.remove('ok');
+    countryIn.focus();
+  }
+
+  inputs.forEach((el) => el.addEventListener('animationend', () => el.classList.remove('shake')));
 
   function endGame(reason) {
     if (game.status !== 'playing') return;
     clearInterval(game.timerId);
-    clearTimeout(pendingMatch);
     game.status = 'over';
     game.endedAt = Date.now();
     const elapsed = game.endedAt - game.startedAt;
@@ -643,9 +737,7 @@
     }
     if (lastJust) { lastJust.g.classList.remove('just'); lastJust.label.classList.remove('just'); }
 
-    input.disabled = true;
-    input.value = '';
-    input.placeholder = 'Game over — press Play again';
+    setInputs(true, 'Game over', '');
     $('give-up').hidden = true;
     $('play-again').hidden = false;
 
@@ -659,7 +751,7 @@
   function showResults(reason, elapsed, record) {
     const pct = Math.round((game.found / TOTAL) * 100);
     $('results-title').textContent =
-      reason === 'complete' ? 'Perfect — every capital!' :
+      reason === 'complete' ? 'Perfect — all 197 pairs!' :
       reason === 'time' ? "Time's up!" : 'Game over';
     $('r-score').textContent = game.found;
     const sub = $('r-sub');
@@ -837,8 +929,7 @@
     $('play-again').hidden = true;
     $('give-up').hidden = true;
     $('start-overlay').hidden = false;
-    input.disabled = true;
-    input.placeholder = 'Press Start to play';
+    setInputs(true, 'Press Start', '');
     applyTimePick();
     updateHud();
     renderList();
@@ -851,14 +942,14 @@
   function keepKeyboard(container) {
     let sx = 0, sy = 0;
     container.addEventListener('mousedown', (ev) => {
-      if (document.activeElement === input && !isUiOverlay(ev.target)) ev.preventDefault();
+      if (isTyping() && !isUiOverlay(ev.target)) ev.preventDefault();
     });
     container.addEventListener('touchstart', (ev) => {
       sx = ev.touches[0].clientX;
       sy = ev.touches[0].clientY;
     }, { passive: true });
     container.addEventListener('touchend', (ev) => {
-      if (document.activeElement !== input || ev.touches.length || isUiOverlay(ev.target)) return;
+      if (!isTyping() || ev.touches.length || isUiOverlay(ev.target)) return;
       const t = ev.changedTouches[0];
       if (Math.hypot(t.clientX - sx, t.clientY - sy) > 10) return;
       ev.preventDefault();
@@ -878,7 +969,7 @@
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
       setAppHeight();
-      if (document.activeElement === input && window.scrollY < 80) window.scrollTo(0, 0);
+      if (isTyping() && window.scrollY < 80) window.scrollTo(0, 0);
     });
   }
   window.addEventListener('resize', setAppHeight);
